@@ -32,6 +32,7 @@
         uniform vec2 u_imageSize;
         uniform sampler2D iChannel0;
         uniform float u_aspectRatio;
+        uniform int u_isMobile;
 
         float random(float seed) {
             return fract(sin(seed) * 43758.5453123);
@@ -165,12 +166,16 @@
 
             float strength = 0.05 * sin(u_time * 0.5 + sn(newUV)) + 0.2;
 
-            float rain = sn(vec2(newUV.x * 20.1, newUV.y * 40.1 + newUV.x * 400.1 - 20. * strength));
-            float rain2 = sn(vec2(newUV.x * 45. + u_time * 0.5, newUV.y * 30.1 + newUV.x * 200.1));
-            rain = strength - rain;
-            rain += smoothstep(0.2, 0.5, f4 + 0.1) * rain;
-            rain += rain2 * (sin(strength) - 0.4) * 2.;
-            rain = clamp(rain, 0., 0.5) * 0.5;
+            float rain = 0.0;
+
+            if (u_isMobile == 0) {
+                rain = sn(vec2(newUV.x * 20.1, newUV.y * 40.1 + newUV.x * 400.1 - 20. * strength));
+                float rain2 = sn(vec2(newUV.x * 45. + u_time * 0.5, newUV.y * 30.1 + newUV.x * 200.1));
+                rain = strength - rain;
+                rain += smoothstep(0.2, 0.5, f4 + 0.1) * rain;
+                rain += rain2 * (sin(strength) - 0.4) * 2.;
+                rain = clamp(rain, 0., 0.5) * 0.5;
+            }
 
             vec3 blueColor = vec3(0.5, 0.0, 1.5);
             vec3 redColor = vec3(2.0, 0.0, 3.0);
@@ -210,7 +215,12 @@
             float fogGradient = smoothstep(0.3, 0.0, uv.y);
             fogEffect *= fogGradient * 1.5;
 
-            gl_FragColor = imageColor + clamp(rain, 0., 1.);
+            gl_FragColor = imageColor;
+
+            if (u_isMobile == 0) {
+                gl_FragColor += clamp(rain, 0., 1.);
+            }
+            
             gl_FragColor.rgb += lightningGlowColor;
             gl_FragColor.rgb += fogEffect;
         }
@@ -222,6 +232,8 @@
         canvas.width = window.innerWidth * window.devicePixelRatio;
         canvas.height = window.innerHeight * window.devicePixelRatio;
         document.body.appendChild(canvas);
+
+        var isMobile = isMobileDevice();
 
         // Initialize WebGL context
         var gl = canvas.getContext('webgl');
@@ -290,6 +302,7 @@
             gl.uniform2fv(gl.getUniformLocation(programMain, "u_imageSize"), [1794, 1024]);
             gl.uniform1f(gl.getUniformLocation(programMain, "u_time"), currentTime);
             gl.uniform1f(gl.getUniformLocation(programMain, "u_aspectRatio"), aspectRatio);
+            gl.uniform1i(gl.getUniformLocation(programMain, "u_isMobile"), isMobile ? 1 : 0);
 
             gl.activeTexture(gl.TEXTURE1);
             gl.bindTexture(gl.TEXTURE_2D, texImage);
@@ -359,6 +372,11 @@
             }
             animate();
         });
+
+        // Check Mobile
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
         
     </script>
 </body>
