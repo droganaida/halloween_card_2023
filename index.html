@@ -94,8 +94,19 @@
             vec3 finalColor = vec3(0.0);
         
             vec2 scaledUV = uv * u_resolution / max(u_resolution.x, u_resolution.y);
-            scaledUV.x += xPos*u_resolution.x;
-            scaledUV.y *= 2.0;
+
+            if (xPos == 0.0) {
+                scaledUV.x = 0.5;
+            } else {
+                scaledUV.x += (xPos + 0.5) * 2.0;
+                if (u_resolution.x < u_resolution.y) {
+                    scaledUV.x += 0.35 * (u_resolution.y / u_resolution.x);
+                }
+            }
+            
+            if (u_resolution.x >= u_resolution.y) {
+                scaledUV.y *= 2.5;
+            }
 
             lSize *= randomRange(0.8, 1.2, Hash(uv));
         
@@ -186,7 +197,7 @@
             float simpleRandom = fract(sin(u_time) * 43758.5453123);
             int llCount = (simpleRandom > 0.75) ? 2 : 1;
 
-            vec3 lightningColor = lightning(uv, 0.15, llCount, 0.5);
+            vec3 lightningColor = lightning(uv, 0.15, llCount, 0.35);
 
             vec3 lightningGlowColor = lightning(uv, 2.0, llCount * 2, 0.0);
 
